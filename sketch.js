@@ -60,7 +60,23 @@ let touchControls = {
   downSide: false,
   autoFire: true,
   controlsVisible: true,
-  togglePressed: false
+  togglePressed: false,
+  // Joystick properties
+  joystick: {
+    active: false,
+    startX: 0,
+    startY: 0,
+    currentX: 0,
+    currentY: 0,
+    maxDistance: 0, // Will be set based on screen size
+    angle: 0,
+    intensity: 0
+  },
+  // Fire button properties
+  fireButton: {
+    pressed: false,
+    lastPressed: 0 // For tracking when it was last pressed
+  }
 };
 
 // Canvas size variables
@@ -727,25 +743,50 @@ function handlePlayerMovement() {
   let isMoving = false;
   
   if (isMobile) {
-    // Mobile touch controls
-    if (touchControls.leftSide) {
-      player.x -= player.speed;
-      isMoving = true;
+    // Mobile joystick controls
+    if (touchControls.joystick.active) {
+      // Calculate movement based on joystick angle and intensity
+      const angle = touchControls.joystick.angle;
+      const intensity = touchControls.joystick.intensity;
+      
+      // Calculate movement vector
+      const moveX = cos(angle) * player.speed * intensity;
+      const moveY = sin(angle) * player.speed * intensity;
+      
+      // Apply movement
+      player.x += moveX;
+      player.y += moveY;
+      
+      // Set directional flags for compatibility with existing code
+      if (moveX < -0.5) touchControls.leftSide = true;
+      if (moveX > 0.5) touchControls.rightSide = true;
+      if (moveY < -0.5) touchControls.upSide = true;
+      if (moveY > 0.5) touchControls.downSide = true;
+      
+      isMoving = intensity > 0.1; // Only consider moving if joystick has significant movement
     }
     
-    if (touchControls.rightSide) {
-      player.x += player.speed;
-      isMoving = true;
-    }
-    
-    if (touchControls.upSide) {
-      player.y -= player.speed;
-      isMoving = true;
-    }
-    
-    if (touchControls.downSide) {
-      player.y += player.speed;
-      isMoving = true;
+    // Fallback to directional controls if needed
+    if (!touchControls.joystick.active) {
+      if (touchControls.leftSide) {
+        player.x -= player.speed;
+        isMoving = true;
+      }
+      
+      if (touchControls.rightSide) {
+        player.x += player.speed;
+        isMoving = true;
+      }
+      
+      if (touchControls.upSide) {
+        player.y -= player.speed;
+        isMoving = true;
+      }
+      
+      if (touchControls.downSide) {
+        player.y += player.speed;
+        isMoving = true;
+      }
     }
   } else {
     // Desktop keyboard controls
@@ -787,8 +828,16 @@ function handleShooting() {
   // Don't allow shooting if boss is defeated
   if (isBossDefeated) return;
   
-  // For mobile, auto-fire is enabled
-  let shouldShoot = isMobile ? touchControls.autoFire : keyIsDown(32);
+  // For mobile, use fire button; for desktop, use space bar
+  let shouldShoot = false;
+  
+  if (isMobile) {
+    // Use fire button for mobile
+    shouldShoot = touchControls.fireButton.pressed;
+  } else {
+    // Use space bar for desktop
+    shouldShoot = keyIsDown(32);
+  }
   
   if (shouldShoot) {
     if (frameCount % player.fireRate === 0) { // Use player's fire rate
@@ -2343,70 +2392,72 @@ function loadPelosiImage() {
 function drawMobileControls() {
   // Set semi-transparent style for controls
   noStroke();
-  fill(255, 255, 255, 50); // Increased opacity for better visibility
   
-  // Calculate control positions based on screen size
-  // Use percentages of screen width/height for better responsiveness
-  const controlSize = min(width, height) * 0.1; // Size scales with screen
+  // Calculate control sizes based on screen size
+  const controlSize = min(width, height) * 0.15; // Size scales with screen
   const margin = controlSize * 0.5;
   
-  // Control positions - bottom left corner of the screen
-  const leftX = margin + controlSize * 0.5;
-  const rightX = leftX + controlSize * 2;
-  const upY = height - margin - controlSize * 2.5;
-  const downY = height - margin - controlSize * 0.5;
-  const centerX = (leftX + rightX) / 2;
-  const centerY = (upY + downY) / 2;
+  // Joystick position - left side of the screen
+  const joystickX = controlSize;
+  const joystickY = height - controlSize;
   
-  // Draw directional controls on the left side with larger, more visible triangles
-  // Left arrow
-  triangle(
-    leftX - controlSize * 0.5, centerY,
-    leftX + controlSize * 0.3, centerY - controlSize * 0.5,
-    leftX + controlSize * 0.3, centerY + controlSize * 0.5
-  );
+  // Fire button position - right side of the screen
+  const fireButtonX = width - controlSize;
+  const fireButtonY = height - controlSize;
+  const fireButtonRadius = controlSize * 0.8;
   
-  // Right arrow
-  triangle(
-    rightX + controlSize * 0.5, centerY,
-    rightX - controlSize * 0.3, centerY - controlSize * 0.5,
-    rightX - controlSize * 0.3, centerY + controlSize * 0.5
-  );
+  // Set joystick max distance if not already set
+  if (touchControls.joystick.maxDistance === 0) {
+    touchControls.joystick.maxDistance = controlSize * 0.8;
+  }
   
-  // Up arrow
-  triangle(
-    centerX, upY - controlSize * 0.5,
-    centerX - controlSize * 0.5, upY + controlSize * 0.3,
-    centerX + controlSize * 0.5, upY + controlSize * 0.3
-  );
+  // Draw joystick base (outer circle)
+  fill(255, 255, 255, 50);
+  ellipse(joystickX, joystickY, controlSize * 2, controlSize * 2);
   
-  // Down arrow
-  triangle(
-    centerX, downY + controlSize * 0.5,
-    centerX - controlSize * 0.5, downY - controlSize * 0.3,
-    centerX + controlSize * 0.5, downY - controlSize * 0.3
-  );
+  // Draw joystick handle (inner circle)
+  let handleX = joystickX;
+  let handleY = joystickY;
   
-  // Draw auto-fire toggle on the right side
-  const toggleX = width - margin - controlSize * 2;
-  const toggleY = height - margin - controlSize;
-  const toggleWidth = controlSize * 4;
-  const toggleHeight = controlSize * 1.5;
+  // If joystick is active, draw the handle at the current position
+  if (touchControls.joystick.active) {
+    handleX = touchControls.joystick.currentX;
+    handleY = touchControls.joystick.currentY;
+  }
   
-  fill(touchControls.autoFire ? color(0, 255, 0, 150) : color(255, 0, 0, 150)); // Increased opacity
-  rect(toggleX, toggleY, toggleWidth, toggleHeight, 10);
+  // Draw joystick handle
+  fill(255, 255, 255, 100);
+  ellipse(handleX, handleY, controlSize, controlSize);
+  
+  // Draw fire button
+  if (touchControls.fireButton.pressed) {
+    // Pressed state
+    fill(255, 50, 50, 180);
+  } else {
+    // Normal state
+    fill(255, 50, 50, 100);
+  }
+  ellipse(fireButtonX, fireButtonY, fireButtonRadius * 2, fireButtonRadius * 2);
+  
+  // Draw fire button label
   fill(255);
-  textSize(max(14, controlSize * 0.5)); // Scale text size with screen
+  textSize(max(16, controlSize * 0.3));
   textAlign(CENTER, CENTER);
-  text(touchControls.autoFire ? "AUTO-FIRE ON" : "AUTO-FIRE OFF", toggleX + toggleWidth/2, toggleY + toggleHeight/2);
+  text("FIRE", fireButtonX, fireButtonY);
   
   // Store control positions for touch detection
   mobileControlPositions = {
-    left: { x: leftX, y: centerY, size: controlSize },
-    right: { x: rightX, y: centerY, size: controlSize },
-    up: { x: centerX, y: upY, size: controlSize },
-    down: { x: centerX, y: downY, size: controlSize },
-    toggle: { x: toggleX, y: toggleY, width: toggleWidth, height: toggleHeight }
+    joystick: { 
+      x: joystickX, 
+      y: joystickY, 
+      size: controlSize,
+      maxDistance: touchControls.joystick.maxDistance
+    },
+    fireButton: { 
+      x: fireButtonX, 
+      y: fireButtonY, 
+      radius: fireButtonRadius
+    }
   };
   
   // Draw debug information if enabled
@@ -2436,11 +2487,21 @@ function drawMobileDebugInfo() {
     text('No touches detected', 10, 105);
   }
   
-  // Display control states
-  text(`Left: ${touchControls.leftSide ? 'ON' : 'off'}`, 10, 150);
-  text(`Right: ${touchControls.rightSide ? 'ON' : 'off'}`, 10, 165);
-  text(`Up: ${touchControls.upSide ? 'ON' : 'off'}`, 10, 180);
-  text(`Down: ${touchControls.downSide ? 'ON' : 'off'}`, 10, 195);
+  // Display joystick status
+  text(`Joystick: ${touchControls.joystick.active ? 'Active' : 'Inactive'}`, 10, 165);
+  if (touchControls.joystick.active) {
+    text(`Angle: ${Math.floor(touchControls.joystick.angle * 180 / PI)}°`, 10, 180);
+    text(`Intensity: ${touchControls.joystick.intensity.toFixed(2)}`, 10, 195);
+  }
+  
+  // Display fire button status
+  text(`Fire: ${touchControls.fireButton.pressed ? 'PRESSED' : 'Released'}`, 10, 210);
+  
+  // Display directional controls (for compatibility)
+  text(`Left: ${touchControls.leftSide ? 'ON' : 'off'}`, width - 100, 150);
+  text(`Right: ${touchControls.rightSide ? 'ON' : 'off'}`, width - 100, 165);
+  text(`Up: ${touchControls.upSide ? 'ON' : 'off'}`, width - 100, 180);
+  text(`Down: ${touchControls.downSide ? 'ON' : 'off'}`, width - 100, 195);
 }
 
 /** Handle touch events for mobile controls */
@@ -2462,7 +2523,7 @@ function touchStarted() {
   }
   
   // Check which control was touched during gameplay
-  if (gameState === 'playing') {
+  if (gameState === 'playing' || gameState === 'boss') {
     checkTouchControls();
   }
   
@@ -2479,15 +2540,26 @@ function touchEnded() {
   touchControls.upSide = false;
   touchControls.downSide = false;
   
+  // Reset joystick when touch ends
+  touchControls.joystick.active = false;
+  touchControls.joystick.currentX = touchControls.joystick.startX;
+  touchControls.joystick.currentY = touchControls.joystick.startY;
+  touchControls.joystick.intensity = 0;
+  
+  // Reset fire button
+  touchControls.fireButton.pressed = false;
+  
   // Prevent default behavior
   return false;
 }
 
 function touchMoved() {
-  if (!isMobile || gameState !== 'playing') return;
+  if (!isMobile) return;
   
   // Update which control is being touched
-  checkTouchControls();
+  if (gameState === 'playing' || gameState === 'boss') {
+    checkTouchControls();
+  }
   
   // Prevent default behavior
   return false;
@@ -2497,51 +2569,66 @@ function checkTouchControls() {
   // If control positions aren't defined yet, return
   if (!mobileControlPositions) return;
   
+  // Reset directional controls
+  touchControls.leftSide = false;
+  touchControls.rightSide = false;
+  touchControls.upSide = false;
+  touchControls.downSide = false;
+  
+  // Reset joystick active state
+  touchControls.joystick.active = false;
+  
   // Check for each touch point
   for (let i = 0; i < touches.length; i++) {
     let tx = touches[i].x;
     let ty = touches[i].y;
     
-    // Left arrow - check if touch is within the control area
-    const left = mobileControlPositions.left;
-    if (dist(tx, ty, left.x, left.y) < left.size) {
-      touchControls.leftSide = true;
-    }
+    // Check if touch is on joystick
+    const joystick = mobileControlPositions.joystick;
+    const joystickDistance = dist(tx, ty, joystick.x, joystick.y);
     
-    // Right arrow
-    const right = mobileControlPositions.right;
-    if (dist(tx, ty, right.x, right.y) < right.size) {
-      touchControls.rightSide = true;
-    }
-    
-    // Up arrow
-    const up = mobileControlPositions.up;
-    if (dist(tx, ty, up.x, up.y) < up.size) {
-      touchControls.upSide = true;
-    }
-    
-    // Down arrow
-    const down = mobileControlPositions.down;
-    if (dist(tx, ty, down.x, down.y) < down.size) {
-      touchControls.downSide = true;
-    }
-    
-    // Auto-fire toggle
-    const toggle = mobileControlPositions.toggle;
-    if (tx >= toggle.x && tx <= toggle.x + toggle.width && 
-        ty >= toggle.y && ty <= toggle.y + toggle.height) {
-      // Only toggle on touch start (not during continuous touch)
-      if (!touchControls.togglePressed) {
-        touchControls.autoFire = !touchControls.autoFire;
-        touchControls.togglePressed = true;
+    if (joystickDistance < joystick.size * 2) {
+      // Joystick is being touched
+      touchControls.joystick.active = true;
+      touchControls.joystick.startX = joystick.x;
+      touchControls.joystick.startY = joystick.y;
+      
+      // Calculate joystick position with constraints
+      let deltaX = tx - joystick.x;
+      let deltaY = ty - joystick.y;
+      let distance = dist(0, 0, deltaX, deltaY);
+      let maxDistance = joystick.maxDistance;
+      
+      // Constrain joystick movement to maxDistance
+      if (distance > maxDistance) {
+        let angle = atan2(deltaY, deltaX);
+        deltaX = cos(angle) * maxDistance;
+        deltaY = sin(angle) * maxDistance;
       }
-    } else {
-      touchControls.togglePressed = false;
+      
+      // Update joystick position
+      touchControls.joystick.currentX = joystick.x + deltaX;
+      touchControls.joystick.currentY = joystick.y + deltaY;
+      
+      // Calculate angle and intensity for movement
+      touchControls.joystick.angle = atan2(deltaY, deltaX);
+      touchControls.joystick.intensity = min(1, distance / maxDistance);
+      
+      // Set directional controls based on joystick position
+      if (deltaX < -maxDistance * 0.3) touchControls.leftSide = true;
+      if (deltaX > maxDistance * 0.3) touchControls.rightSide = true;
+      if (deltaY < -maxDistance * 0.3) touchControls.upSide = true;
+      if (deltaY > maxDistance * 0.3) touchControls.downSide = true;
     }
-  }
-  
-  // If no touches, reset toggle pressed state
-  if (touches.length === 0) {
-    touchControls.togglePressed = false;
+    
+    // Check if touch is on fire button
+    const fireButton = mobileControlPositions.fireButton;
+    const fireButtonDistance = dist(tx, ty, fireButton.x, fireButton.y);
+    
+    if (fireButtonDistance < fireButton.radius) {
+      // Fire button is being pressed
+      touchControls.fireButton.pressed = true;
+      touchControls.fireButton.lastPressed = millis();
+    }
   }
 }

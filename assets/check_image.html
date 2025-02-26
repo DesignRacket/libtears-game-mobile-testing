@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Image Check</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f0f0f0;
+    }
+    .result {
+      margin: 20px 0;
+      padding: 10px;
+      border: 1px solid #ccc;
+      background-color: #fff;
+    }
+    .success {
+      color: green;
+      font-weight: bold;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+    img {
+      max-width: 300px;
+      border: 1px solid #333;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Pelosi Image Check</h1>
+  
+  <div class="result" id="result">Checking image...</div>
+  
+  <div>
+    <h2>Image Preview (if available):</h2>
+    <img id="pelosiImg" src="pelosi.png" alt="Pelosi Image" onerror="imageError()" onload="imageLoaded()">
+  </div>
+  
+  <div>
+    <h2>Try these paths:</h2>
+    <ul>
+      <li><a href="pelosi.png" target="_blank">assets/pelosi.png</a></li>
+      <li><a href="/assets/pelosi.png" target="_blank">/assets/pelosi.png</a></li>
+      <li><a href="../assets/pelosi.png" target="_blank">../assets/pelosi.png</a></li>
+    </ul>
+  </div>
+  
+  <script>
+    function imageLoaded() {
+      document.getElementById('result').innerHTML = 
+        '<span class="success">SUCCESS: Image loaded successfully!</span>' +
+        '<p>The image is accessible at the path "assets/pelosi.png"</p>';
+    }
+    
+    function imageError() {
+      document.getElementById('result').innerHTML = 
+        '<span class="error">ERROR: Image failed to load!</span>' +
+        '<p>The image is not accessible at the path "assets/pelosi.png"</p>' +
+        '<p>Please make sure the file exists and is named correctly (case-sensitive).</p>';
+      
+      // Try to check other paths
+      checkOtherPaths();
+    }
+    
+    function checkOtherPaths() {
+      // Create a list of paths to check
+      const paths = [
+        '/assets/pelosi.png',
+        '../assets/pelosi.png',
+        '../../assets/pelosi.png',
+        './pelosi.png'
+      ];
+      
+      let results = '<h3>Path Check Results:</h3><ul>';
+      
+      paths.forEach(path => {
+        const img = new Image();
+        img.onload = function() {
+          results += `<li><span class="success">SUCCESS: ${path}</span></li>`;
+          document.getElementById('pathResults').innerHTML = results + '</ul>';
+        };
+        img.onerror = function() {
+          results += `<li><span class="error">FAILED: ${path}</span></li>`;
+          document.getElementById('pathResults').innerHTML = results + '</ul>';
+        };
+        img.src = path;
+      });
+      
+      document.getElementById('result').innerHTML += '<div id="pathResults"></div>';
+    }
+  </script>
+</body>
+</html> 

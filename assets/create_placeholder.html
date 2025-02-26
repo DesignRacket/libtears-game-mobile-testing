@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Create Pelosi Placeholder Image</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f0f0f0;
+    }
+    canvas {
+      border: 1px solid #333;
+      margin: 20px 0;
+      background-color: transparent;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .instructions {
+      max-width: 600px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Create Pelosi Placeholder Image</h1>
+  
+  <div class="instructions">
+    <p>This tool will help you create a simple placeholder image for the Nancy Pelosi boss in the LibTears game.</p>
+    <p>The canvas below has a transparent background. Click "Download Image" to save it as pelosi.png in the assets folder.</p>
+    <p>For best results, replace this with the actual Nancy Pelosi image from your conversation.</p>
+  </div>
+  
+  <canvas id="canvas" width="300" height="300"></canvas><br>
+  <button id="downloadBtn">Download Image</button>
+  
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Draw a simple placeholder face
+    function drawPlaceholder() {
+      // Clear canvas with transparent background
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw head
+      ctx.fillStyle = '#f0d0c0';
+      ctx.beginPath();
+      ctx.arc(150, 150, 100, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Draw hair
+      ctx.fillStyle = '#8B4513';
+      ctx.beginPath();
+      ctx.arc(150, 150, 110, Math.PI, 0);
+      ctx.fill();
+      
+      // Draw eyes
+      ctx.fillStyle = 'white';
+      ctx.beginPath();
+      ctx.ellipse(120, 120, 20, 15, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(180, 120, 20, 15, 0, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Draw pupils
+      ctx.fillStyle = 'black';
+      ctx.beginPath();
+      ctx.arc(120, 120, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(180, 120, 8, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Draw mouth
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(150, 180, 30, 0, Math.PI);
+      ctx.stroke();
+      
+      // Draw text
+      ctx.fillStyle = 'black';
+      ctx.font = 'bold 24px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('PELOSI', 150, 230);
+    }
+    
+    // Draw the placeholder
+    drawPlaceholder();
+    
+    // Set up download button
+    document.getElementById('downloadBtn').addEventListener('click', function() {
+      const link = document.createElement('a');
+      link.download = 'pelosi.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+  </script>
+</body>
+</html> 

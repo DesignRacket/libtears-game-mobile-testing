@@ -2,44 +2,62 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LibTears: The Triggering</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <style>
-      body {
+      html, body {
         margin: 0;
         padding: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        position: fixed;
         background-color: #000;
         color: #fff;
         font-family: Arial, sans-serif;
-        overflow: hidden; /* Prevent scrolling */
       }
-      canvas {
-        display: block;
-        margin: 0 auto; /* Center the canvas */
-      }
-      #gameContainer {
-        position: relative;
-        width: 100%;
-        max-width: 800px;
-        height: 100%;
-        max-height: 600px;
+      
+      body {
         display: flex;
-        flex-direction: column;
         justify-content: center;
         align-items: center;
       }
-      #instructions {
-        margin-top: 20px;
-        text-align: center;
+      
+      canvas {
+        display: block !important;
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
       }
+      
+      #gameContainer {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+      }
+      
+      #instructions {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        width: 80%;
+        z-index: 10;
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 20px;
+        border-radius: 10px;
+      }
+      
       /* Hide instructions when game is active */
       .game-active #instructions {
-        display: none;
+        display: none !important;
       }
     </style>
   </head>

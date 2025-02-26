@@ -131,24 +131,38 @@ function setup() {
 
 /** Create a canvas that fits the window size */
 function createResponsiveCanvas() {
-  // For mobile, use the full window size
+  // For mobile, use the full window size with a small margin
   if (isMobile || window.innerWidth < 800 || window.innerHeight < 600) {
-    canvasWidth = window.innerWidth;
-    canvasHeight = window.innerHeight;
+    // Use a slightly smaller size than the window to ensure controls are visible
+    canvasWidth = window.innerWidth * 0.95;
+    canvasHeight = window.innerHeight * 0.95;
+    
+    // Ensure the aspect ratio is maintained
+    const aspectRatio = 4/3; // Standard aspect ratio
+    
+    // Adjust based on aspect ratio
+    if (canvasWidth / canvasHeight > aspectRatio) {
+      // Width is too wide, adjust it
+      canvasWidth = canvasHeight * aspectRatio;
+    } else {
+      // Height is too tall, adjust it
+      canvasHeight = canvasWidth / aspectRatio;
+    }
   } else {
     // For desktop, use fixed size or constrained by window
     canvasWidth = min(800, window.innerWidth - 20);
     canvasHeight = min(600, window.innerHeight - 20);
   }
   
-  // Create the canvas and center it
+  // Create the canvas
   let canvas = createCanvas(canvasWidth, canvasHeight);
   
-  // Center the canvas within the gameContainer
-  let gameContainer = document.getElementById('gameContainer');
-  if (gameContainer && canvas.elt) {
-    // Make sure the canvas is centered
-    canvas.elt.style.margin = '0 auto';
+  // Force the canvas to be centered
+  if (canvas.elt) {
+    canvas.elt.style.position = 'absolute';
+    canvas.elt.style.top = '50%';
+    canvas.elt.style.left = '50%';
+    canvas.elt.style.transform = 'translate(-50%, -50%)';
   }
   
   console.log(`Canvas created with size: ${canvasWidth}x${canvasHeight}`);
@@ -626,7 +640,16 @@ function startGame() {
   let gameContainer = document.getElementById('gameContainer');
   if (gameContainer) {
     gameContainer.classList.add('game-active');
+    
+    // Also hide the instructions directly for extra certainty
+    let instructions = document.getElementById('instructions');
+    if (instructions) {
+      instructions.style.display = 'none';
+    }
   }
+  
+  // Force a window resize to ensure everything is positioned correctly
+  windowResized();
 }
 
 /** Get trigger phrase for each level */
@@ -2414,17 +2437,17 @@ function drawMobileControls() {
   // Set semi-transparent style for controls
   noStroke();
   
-  // Calculate control sizes based on screen size
-  const controlSize = min(width, height) * 0.15; // Size scales with screen
+  // Calculate control sizes based on screen size, but ensure they're not too large
+  const controlSize = min(width, height) * 0.12; // Slightly smaller than before
   const margin = controlSize * 0.5;
   
-  // Joystick position - left side of the screen
-  const joystickX = controlSize;
-  const joystickY = height - controlSize;
+  // Joystick position - left side of the screen with margin
+  const joystickX = margin + controlSize;
+  const joystickY = height - margin - controlSize;
   
-  // Fire button position - right side of the screen
-  const fireButtonX = width - controlSize;
-  const fireButtonY = height - controlSize;
+  // Fire button position - right side of the screen with margin
+  const fireButtonX = width - margin - controlSize;
+  const fireButtonY = height - margin - controlSize;
   const fireButtonRadius = controlSize * 0.8;
   
   // Set joystick max distance if not already set

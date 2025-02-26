@@ -4,7 +4,7 @@ A fun arcade-style shooter game where you battle against triggered opponents and
 
 ## Play the Game
 
-You can play the game directly in your browser: [Play LibTears](https://yourusername.github.io/libtears-game/)
+You can play the game directly in your browser: [Play LibTears](https://designracket.github.io/libtears-game/)
 
 ## Game Controls
 

@@ -59,8 +59,14 @@ let touchControls = {
   upSide: false,
   downSide: false,
   autoFire: true,
-  controlsVisible: true
+  controlsVisible: true,
+  togglePressed: false
 };
+
+// Canvas size variables
+let canvasWidth = 800;
+let canvasHeight = 600;
+let mobileControlPositions; // Stores positions of mobile controls
 
 /** Preload function to load assets */
 function preload() {
@@ -72,7 +78,9 @@ function preload() {
 /** Setup function to initialize the game */
 function setup() {
   console.log('Setup function running');
-  createCanvas(800, 600);
+  
+  // Create a responsive canvas that fits the window
+  createResponsiveCanvas();
   
   // Detect if user is on mobile
   detectMobileDevice();
@@ -103,6 +111,40 @@ function setup() {
   
   // Force loading complete
   loadingComplete = true;
+}
+
+/** Create a canvas that fits the window size */
+function createResponsiveCanvas() {
+  // For mobile, use the full window size
+  if (isMobile || window.innerWidth < 800 || window.innerHeight < 600) {
+    canvasWidth = window.innerWidth;
+    canvasHeight = window.innerHeight;
+  } else {
+    // For desktop, use fixed size or constrained by window
+    canvasWidth = min(800, window.innerWidth - 20);
+    canvasHeight = min(600, window.innerHeight - 20);
+  }
+  
+  createCanvas(canvasWidth, canvasHeight);
+  console.log(`Canvas created with size: ${canvasWidth}x${canvasHeight}`);
+}
+
+/** Handle window resizing */
+function windowResized() {
+  // Resize the canvas to fit the new window size
+  createResponsiveCanvas();
+  
+  // Reinitialize stars for the new canvas size
+  initStars();
+  
+  // Adjust player position if needed
+  if (player) {
+    // Keep player within bounds
+    player.x = constrain(player.x, 0, width);
+    player.y = constrain(player.y, 0, height);
+  }
+  
+  console.log('Window resized, canvas updated');
 }
 
 /** Detect if the user is on a mobile device */
@@ -362,6 +404,15 @@ function draw() {
       
     case 'titleScreen':
       drawTitleScreen();
+      
+      // Draw mobile controls if on mobile device (even on title screen)
+      if (isMobile && touchControls.controlsVisible) {
+        // Draw a "Tap here to start" indicator
+        fill(255, 255, 255, 100 + 50 * sin(frameCount * 0.05));
+        textSize(24);
+        textAlign(CENTER);
+        text("Tap anywhere to start", width / 2, height - 50);
+      }
       break;
     case 'levelStart':
       // This state can still be used if needed
@@ -417,7 +468,7 @@ function draw() {
       }
       
       // Draw mobile controls if on mobile device
-      if (isMobile && gameState === 'playing' && touchControls.controlsVisible) {
+      if (isMobile && touchControls.controlsVisible) {
         drawMobileControls();
       }
       break;
@@ -430,45 +481,21 @@ function draw() {
       
       drawPlayer();
       handlePlayerMovement();
-      // Only allow shooting if boss is not defeated
-      if (!isBossDefeated) {
-        handleShooting();
-      }
+      handleShooting();
       moveTears();
       moveFlags();
       updatePowerUps();
       checkBossCollisions();
       displayHUD();
       
-      // Display pattern announcement if active
-      if (patternAnnouncement && patternAnnouncementTimer > 0) {
-        displayPatternAnnouncement();
-        patternAnnouncementTimer--;
-      }
-      
-      // Display boss death sequence if active
-      if (showBossDeathQuote) {
+      // Display boss death sequence if boss is defeated
+      if (isBossDefeated) {
         displayBossDeathSequence();
-        
-        // Only transition to victory after the full death sequence
-        if (bossDeathPhase >= bossDeathQuotes.length) {
-          showBossDeathQuote = false;
-          gameState = 'victory';
-        }
       }
       
-      if (boss.health <= 0 && !showBossDeathQuote) {
-        score += 500; // Bonus for defeating boss
-        showBossDeathQuote = true;
-        bossDeathQuoteTimer = 180; // Show first quote for 3 seconds
-        bossDeathPhase = 0; // Start with the first death phase
-        bossRotation = 0;
-        bossScale = 1;
-        bossOpacity = 255;
-        isBossDefeated = true; // Set the boss as defeated
-        
-        // Clear all tears from screen for dramatic effect
-        tears = [];
+      // Draw mobile controls if on mobile device
+      if (isMobile && touchControls.controlsVisible) {
+        drawMobileControls();
       }
       break;
     case 'gameOver':
@@ -2316,28 +2343,104 @@ function loadPelosiImage() {
 function drawMobileControls() {
   // Set semi-transparent style for controls
   noStroke();
-  fill(255, 255, 255, 30);
+  fill(255, 255, 255, 50); // Increased opacity for better visibility
   
-  // Draw directional controls on the left side
+  // Calculate control positions based on screen size
+  // Use percentages of screen width/height for better responsiveness
+  const controlSize = min(width, height) * 0.1; // Size scales with screen
+  const margin = controlSize * 0.5;
+  
+  // Control positions - bottom left corner of the screen
+  const leftX = margin + controlSize * 0.5;
+  const rightX = leftX + controlSize * 2;
+  const upY = height - margin - controlSize * 2.5;
+  const downY = height - margin - controlSize * 0.5;
+  const centerX = (leftX + rightX) / 2;
+  const centerY = (upY + downY) / 2;
+  
+  // Draw directional controls on the left side with larger, more visible triangles
   // Left arrow
-  triangle(50, height - 100, 20, height - 70, 50, height - 40);
+  triangle(
+    leftX - controlSize * 0.5, centerY,
+    leftX + controlSize * 0.3, centerY - controlSize * 0.5,
+    leftX + controlSize * 0.3, centerY + controlSize * 0.5
+  );
   
   // Right arrow
-  triangle(150, height - 100, 180, height - 70, 150, height - 40);
+  triangle(
+    rightX + controlSize * 0.5, centerY,
+    rightX - controlSize * 0.3, centerY - controlSize * 0.5,
+    rightX - controlSize * 0.3, centerY + controlSize * 0.5
+  );
   
   // Up arrow
-  triangle(100, height - 150, 70, height - 120, 130, height - 120);
+  triangle(
+    centerX, upY - controlSize * 0.5,
+    centerX - controlSize * 0.5, upY + controlSize * 0.3,
+    centerX + controlSize * 0.5, upY + controlSize * 0.3
+  );
   
   // Down arrow
-  triangle(100, height - 50, 70, height - 80, 130, height - 80);
+  triangle(
+    centerX, downY + controlSize * 0.5,
+    centerX - controlSize * 0.5, downY - controlSize * 0.3,
+    centerX + controlSize * 0.5, downY - controlSize * 0.3
+  );
   
   // Draw auto-fire toggle on the right side
-  fill(touchControls.autoFire ? color(0, 255, 0, 100) : color(255, 0, 0, 100));
-  rect(width - 150, height - 100, 100, 50, 10);
+  const toggleX = width - margin - controlSize * 2;
+  const toggleY = height - margin - controlSize;
+  const toggleWidth = controlSize * 4;
+  const toggleHeight = controlSize * 1.5;
+  
+  fill(touchControls.autoFire ? color(0, 255, 0, 150) : color(255, 0, 0, 150)); // Increased opacity
+  rect(toggleX, toggleY, toggleWidth, toggleHeight, 10);
   fill(255);
-  textSize(14);
+  textSize(max(14, controlSize * 0.5)); // Scale text size with screen
   textAlign(CENTER, CENTER);
-  text(touchControls.autoFire ? "AUTO-FIRE ON" : "AUTO-FIRE OFF", width - 100, height - 75);
+  text(touchControls.autoFire ? "AUTO-FIRE ON" : "AUTO-FIRE OFF", toggleX + toggleWidth/2, toggleY + toggleHeight/2);
+  
+  // Store control positions for touch detection
+  mobileControlPositions = {
+    left: { x: leftX, y: centerY, size: controlSize },
+    right: { x: rightX, y: centerY, size: controlSize },
+    up: { x: centerX, y: upY, size: controlSize },
+    down: { x: centerX, y: downY, size: controlSize },
+    toggle: { x: toggleX, y: toggleY, width: toggleWidth, height: toggleHeight }
+  };
+  
+  // Draw debug information if enabled
+  if (frameCount % 60 < 30) { // Only show every other second to reduce clutter
+    drawMobileDebugInfo();
+  }
+}
+
+/** Draw debug information for mobile devices */
+function drawMobileDebugInfo() {
+  fill(255, 255, 0, 200);
+  textAlign(LEFT);
+  textSize(12);
+  
+  // Display screen information
+  text(`Screen: ${width}x${height}`, 10, 60);
+  text(`Mobile: ${isMobile ? 'Yes' : 'No'}`, 10, 75);
+  text(`Game State: ${gameState}`, 10, 90);
+  
+  // Display touch information
+  if (touches.length > 0) {
+    text(`Touches: ${touches.length}`, 10, 105);
+    for (let i = 0; i < min(touches.length, 3); i++) {
+      text(`Touch ${i}: ${Math.floor(touches[i].x)},${Math.floor(touches[i].y)}`, 10, 120 + i * 15);
+    }
+  } else {
+    text('No touches detected', 10, 105);
+  }
+  
+  // Display control states
+  text(`Left: ${touchControls.leftSide ? 'ON' : 'off'}`, 10, 150);
+  text(`Right: ${touchControls.rightSide ? 'ON' : 'off'}`, 10, 165);
+  text(`Up: ${touchControls.upSide ? 'ON' : 'off'}`, 10, 180);
+  text(`Down: ${touchControls.downSide ? 'ON' : 'off'}`, 10, 195);
 }
 
 /** Handle touch events for mobile controls */
@@ -2391,37 +2494,54 @@ function touchMoved() {
 }
 
 function checkTouchControls() {
+  // If control positions aren't defined yet, return
+  if (!mobileControlPositions) return;
+  
   // Check for each touch point
   for (let i = 0; i < touches.length; i++) {
     let tx = touches[i].x;
     let ty = touches[i].y;
     
-    // Left arrow
-    if (tx >= 20 && tx <= 50 && ty >= height - 100 && ty <= height - 40) {
+    // Left arrow - check if touch is within the control area
+    const left = mobileControlPositions.left;
+    if (dist(tx, ty, left.x, left.y) < left.size) {
       touchControls.leftSide = true;
     }
     
     // Right arrow
-    if (tx >= 150 && tx <= 180 && ty >= height - 100 && ty <= height - 40) {
+    const right = mobileControlPositions.right;
+    if (dist(tx, ty, right.x, right.y) < right.size) {
       touchControls.rightSide = true;
     }
     
     // Up arrow
-    if (tx >= 70 && tx <= 130 && ty >= height - 150 && ty <= height - 120) {
+    const up = mobileControlPositions.up;
+    if (dist(tx, ty, up.x, up.y) < up.size) {
       touchControls.upSide = true;
     }
     
     // Down arrow
-    if (tx >= 70 && tx <= 130 && ty >= height - 80 && ty <= height - 50) {
+    const down = mobileControlPositions.down;
+    if (dist(tx, ty, down.x, down.y) < down.size) {
       touchControls.downSide = true;
     }
     
     // Auto-fire toggle
-    if (tx >= width - 150 && tx <= width - 50 && ty >= height - 100 && ty <= height - 50) {
-      // Toggle auto-fire on touch release
-      if (touches.length === 0) {
+    const toggle = mobileControlPositions.toggle;
+    if (tx >= toggle.x && tx <= toggle.x + toggle.width && 
+        ty >= toggle.y && ty <= toggle.y + toggle.height) {
+      // Only toggle on touch start (not during continuous touch)
+      if (!touchControls.togglePressed) {
         touchControls.autoFire = !touchControls.autoFire;
+        touchControls.togglePressed = true;
       }
+    } else {
+      touchControls.togglePressed = false;
     }
+  }
+  
+  // If no touches, reset toggle pressed state
+  if (touches.length === 0) {
+    touchControls.togglePressed = false;
   }
 }

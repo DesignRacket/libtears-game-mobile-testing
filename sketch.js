@@ -51,6 +51,17 @@ let isBossDefeated = false; // Flag to track if boss is defeated
 let showTriggerPhrase = false; // Flag to show trigger phrase during gameplay
 let canLadiesDropTears = false; // Flag to control when ladies can drop tears
 
+// Global variables for mobile controls
+let isMobile = false;
+let touchControls = {
+  leftSide: false,
+  rightSide: false,
+  upSide: false,
+  downSide: false,
+  autoFire: true,
+  controlsVisible: true
+};
+
 /** Preload function to load assets */
 function preload() {
   console.log('Preload function running');
@@ -62,6 +73,9 @@ function preload() {
 function setup() {
   console.log('Setup function running');
   createCanvas(800, 600);
+  
+  // Detect if user is on mobile
+  detectMobileDevice();
   
   // Create fallback image immediately
   console.log('Creating fallback image');
@@ -89,6 +103,25 @@ function setup() {
   
   // Force loading complete
   loadingComplete = true;
+}
+
+/** Detect if the user is on a mobile device */
+function detectMobileDevice() {
+  // Check if the user agent string contains mobile-specific keywords
+  const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+  if (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent)) {
+    isMobile = true;
+    console.log('Mobile device detected');
+  } else {
+    isMobile = false;
+    console.log('Desktop device detected');
+  }
+  
+  // Also check screen size as a fallback
+  if (window.innerWidth <= 800 || window.innerHeight <= 600) {
+    isMobile = true;
+    console.log('Small screen detected, treating as mobile');
+  }
 }
 
 /** Create a fallback image if the Pelosi image fails to load */
@@ -280,7 +313,7 @@ function initLadyFormation() {
       leftEyeY: -10,
       rightEyeX: 15, 
       rightEyeY: -10,
-      tearTimer: floor(random(60, 120)), // Longer initial tear timers
+      tearTimer: floor(random(30, 60)), // Reduced from (60, 120) to double the rate
       tearSpeed: 3,
       tearPattern: 'normal',
       health: 3, // Each lady takes 3 hits to defeat
@@ -381,6 +414,11 @@ function draw() {
         gameState = 'levelStart';
         phraseTimer = 0;
         isBossFight = true; // Set the boss fight flag
+      }
+      
+      // Draw mobile controls if on mobile device
+      if (isMobile && gameState === 'playing' && touchControls.controlsVisible) {
+        drawMobileControls();
       }
       break;
     case 'boss':
@@ -646,28 +684,52 @@ function handlePlayerMovement() {
   // Variable to track if any movement key is pressed
   let isMoving = false;
   
-  // W key - move up
-  if (keyIsDown(87)) { // W key
-    player.y -= player.speed;
-    isMoving = true;
-  }
-  
-  // S key - move down
-  if (keyIsDown(83)) { // S key
-    player.y += player.speed;
-    isMoving = true;
-  }
-  
-  // A key - move left
-  if (keyIsDown(65)) { // A key
-    player.x -= player.speed;
-    isMoving = true;
-  }
-  
-  // D key - move right
-  if (keyIsDown(68)) { // D key
-    player.x += player.speed;
-    isMoving = true;
+  if (isMobile) {
+    // Mobile touch controls
+    if (touchControls.leftSide) {
+      player.x -= player.speed;
+      isMoving = true;
+    }
+    
+    if (touchControls.rightSide) {
+      player.x += player.speed;
+      isMoving = true;
+    }
+    
+    if (touchControls.upSide) {
+      player.y -= player.speed;
+      isMoving = true;
+    }
+    
+    if (touchControls.downSide) {
+      player.y += player.speed;
+      isMoving = true;
+    }
+  } else {
+    // Desktop keyboard controls
+    // W key - move up
+    if (keyIsDown(87)) { // W key
+      player.y -= player.speed;
+      isMoving = true;
+    }
+    
+    // S key - move down
+    if (keyIsDown(83)) { // S key
+      player.y += player.speed;
+      isMoving = true;
+    }
+    
+    // A key - move left
+    if (keyIsDown(65)) { // A key
+      player.x -= player.speed;
+      isMoving = true;
+    }
+    
+    // D key - move right
+    if (keyIsDown(68)) { // D key
+      player.x += player.speed;
+      isMoving = true;
+    }
   }
   
   // Constrain player to screen boundaries
@@ -683,7 +745,10 @@ function handleShooting() {
   // Don't allow shooting if boss is defeated
   if (isBossDefeated) return;
   
-  if (keyIsDown(32)) { // 32 is the keyCode for spacebar
+  // For mobile, auto-fire is enabled
+  let shouldShoot = isMobile ? touchControls.autoFire : keyIsDown(32);
+  
+  if (shouldShoot) {
     if (frameCount % player.fireRate === 0) { // Use player's fire rate
       
       // Basic flag
@@ -825,8 +890,8 @@ function updateLadyFormation() {
           spawnTearsFromLady(lady);
         }
         
-        // Reset tear timer with some randomness
-        lady.tearTimer = floor(random(90, 150));
+        // Reset tear timer with some randomness - reduced to double the rate
+        lady.tearTimer = floor(random(45, 75)); // Reduced from (90, 150)
       }
     }
   }
@@ -2206,4 +2271,102 @@ function loadPelosiImage() {
   console.log('Built-in Pelosi image ready for use');
   
   // No need for the timeout since we're using the fallback image immediately
+}
+
+/** Draw mobile touch controls */
+function drawMobileControls() {
+  // Set semi-transparent style for controls
+  noStroke();
+  fill(255, 255, 255, 30);
+  
+  // Draw directional controls on the left side
+  // Left arrow
+  triangle(50, height - 100, 20, height - 70, 50, height - 40);
+  
+  // Right arrow
+  triangle(150, height - 100, 180, height - 70, 150, height - 40);
+  
+  // Up arrow
+  triangle(100, height - 150, 70, height - 120, 130, height - 120);
+  
+  // Down arrow
+  triangle(100, height - 50, 70, height - 80, 130, height - 80);
+  
+  // Draw auto-fire toggle on the right side
+  fill(touchControls.autoFire ? color(0, 255, 0, 100) : color(255, 0, 0, 100));
+  rect(width - 150, height - 100, 100, 50, 10);
+  fill(255);
+  textSize(14);
+  textAlign(CENTER, CENTER);
+  text(touchControls.autoFire ? "AUTO-FIRE ON" : "AUTO-FIRE OFF", width - 100, height - 75);
+}
+
+/** Handle touch events for mobile controls */
+function touchStarted() {
+  if (!isMobile || gameState !== 'playing') return;
+  
+  // Check which control was touched
+  checkTouchControls();
+  
+  // Prevent default behavior (like scrolling)
+  return false;
+}
+
+function touchEnded() {
+  if (!isMobile) return;
+  
+  // Reset touch controls when touch ends
+  touchControls.leftSide = false;
+  touchControls.rightSide = false;
+  touchControls.upSide = false;
+  touchControls.downSide = false;
+  
+  // Prevent default behavior
+  return false;
+}
+
+function touchMoved() {
+  if (!isMobile || gameState !== 'playing') return;
+  
+  // Update which control is being touched
+  checkTouchControls();
+  
+  // Prevent default behavior
+  return false;
+}
+
+function checkTouchControls() {
+  // Check for each touch point
+  for (let i = 0; i < touches.length; i++) {
+    let tx = touches[i].x;
+    let ty = touches[i].y;
+    
+    // Left arrow
+    if (tx >= 20 && tx <= 50 && ty >= height - 100 && ty <= height - 40) {
+      touchControls.leftSide = true;
+    }
+    
+    // Right arrow
+    if (tx >= 150 && tx <= 180 && ty >= height - 100 && ty <= height - 40) {
+      touchControls.rightSide = true;
+    }
+    
+    // Up arrow
+    if (tx >= 70 && tx <= 130 && ty >= height - 150 && ty <= height - 120) {
+      touchControls.upSide = true;
+    }
+    
+    // Down arrow
+    if (tx >= 70 && tx <= 130 && ty >= height - 80 && ty <= height - 50) {
+      touchControls.downSide = true;
+    }
+    
+    // Auto-fire toggle
+    if (tx >= width - 150 && tx <= width - 50 && ty >= height - 100 && ty <= height - 50) {
+      // Toggle auto-fire on touch release
+      if (touches.length === 0) {
+        touchControls.autoFire = !touchControls.autoFire;
+      }
+    }
+  }
 }

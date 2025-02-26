@@ -212,32 +212,101 @@ function createFallbackImage() {
   // Set background to transparent
   fallbackImg.clear();
   
-  // Draw a generic boss character instead of Pelosi
-  fallbackImg.fill(50, 50, 150); // Blue color for the boss
+  // Draw head - skin tone for Pelosi
+  fallbackImg.fill(240, 208, 192);
   fallbackImg.noStroke();
-  fallbackImg.ellipse(150, 150, 200, 200); // Head
+  fallbackImg.ellipse(150, 150, 200, 200);
+  
+  // Draw hair - dark brown with highlights
+  fallbackImg.fill(80, 50, 35);
+  fallbackImg.arc(150, 150, 220, 220, PI, 0, CHORD);
+  
+  // Hair highlights
+  fallbackImg.fill(120, 90, 70);
+  fallbackImg.arc(150, 150, 210, 210, PI, 0, CHORD);
+  
+  // Draw neck
+  fallbackImg.fill(230, 198, 182);
+  fallbackImg.rect(130, 230, 40, 50);
+  
+  // Draw suit - dark blue
+  fallbackImg.fill(25, 25, 112);
+  fallbackImg.rect(90, 250, 120, 50);
+  
+  // Draw pearl necklace
+  for(let i = 0; i < 9; i++) {
+    fallbackImg.fill(255, 255, 250);
+    fallbackImg.ellipse(110 + i*20, 255, 15, 15);
+    fallbackImg.fill(240, 240, 235);
+    fallbackImg.ellipse(110 + i*20, 255, 10, 10);
+  }
   
   // Draw eyes
   fallbackImg.fill(255);
   fallbackImg.ellipse(120, 130, 40, 30);
   fallbackImg.ellipse(180, 130, 40, 30);
   
-  // Draw pupils
-  fallbackImg.fill(0);
+  // Draw pupils - dark brown
+  fallbackImg.fill(50, 25, 0);
   fallbackImg.ellipse(120, 130, 20, 20);
   fallbackImg.ellipse(180, 130, 20, 20);
   
-  // Draw mouth - angry expression
-  fallbackImg.stroke(0);
+  // Draw eyebrows - thin and arched
+  fallbackImg.stroke(80, 50, 35);
   fallbackImg.strokeWeight(3);
   fallbackImg.noFill();
-  fallbackImg.arc(150, 190, 80, 60, 0, PI);
+  fallbackImg.arc(120, 115, 50, 30, PI, TWO_PI-0.8);
+  fallbackImg.arc(180, 115, 50, 30, PI+0.8, TWO_PI);
   
-  // Draw eyebrows - angry expression
-  fallbackImg.stroke(0);
-  fallbackImg.strokeWeight(5);
-  fallbackImg.line(100, 110, 140, 120);
-  fallbackImg.line(160, 120, 200, 110);
+  // Draw eyelids and wrinkles
+  fallbackImg.stroke(220, 188, 172);
+  fallbackImg.strokeWeight(2);
+  fallbackImg.line(100, 120, 140, 120);
+  fallbackImg.line(160, 120, 200, 120);
+  
+  // More wrinkles around eyes
+  fallbackImg.stroke(220, 188, 172);
+  fallbackImg.line(95, 115, 145, 115);
+  fallbackImg.line(155, 115, 205, 115);
+  fallbackImg.arc(120, 130, 50, 40, 0, PI/2);
+  fallbackImg.arc(180, 130, 50, 40, PI/2, PI);
+  
+  // Draw nose
+  fallbackImg.noStroke();
+  fallbackImg.fill(230, 198, 182);
+  fallbackImg.triangle(150, 130, 135, 170, 165, 170);
+  
+  // Draw mouth - thin lips with lipstick
+  fallbackImg.fill(180, 70, 70);
+  fallbackImg.arc(150, 190, 70, 30, 0, PI);
+  fallbackImg.fill(240, 208, 192);
+  fallbackImg.arc(150, 190, 65, 20, 0, PI);
+  fallbackImg.fill(180, 70, 70);
+  fallbackImg.arc(150, 190, 60, 15, 0, PI);
+  
+  // Draw cheeks with slight blush
+  fallbackImg.fill(255, 150, 150, 50);
+  fallbackImg.ellipse(110, 170, 40, 30);
+  fallbackImg.ellipse(190, 170, 40, 30);
+  
+  // Add some facial lines/wrinkles
+  fallbackImg.stroke(220, 188, 172);
+  fallbackImg.strokeWeight(1);
+  fallbackImg.line(120, 170, 140, 180);
+  fallbackImg.line(160, 180, 180, 170);
+  fallbackImg.noFill();
+  fallbackImg.arc(150, 210, 80, 20, PI/6, 5*PI/6);
+  
+  // Add earrings - pearl
+  fallbackImg.fill(255, 255, 250);
+  fallbackImg.noStroke();
+  fallbackImg.ellipse(75, 150, 20, 20);
+  fallbackImg.ellipse(225, 150, 20, 20);
+  
+  // Add some shine to earrings
+  fallbackImg.fill(255);
+  fallbackImg.ellipse(72, 147, 5, 5);
+  fallbackImg.ellipse(222, 147, 5, 5);
   
   // Add text label
   fallbackImg.fill(0);
@@ -245,9 +314,9 @@ function createFallbackImage() {
   fallbackImg.textSize(24);
   fallbackImg.textAlign(CENTER);
   fallbackImg.textStyle(BOLD);
-  fallbackImg.text("FINAL BOSS", 150, 290);
+  fallbackImg.text("NANCY PELOSI", 150, 290);
   
-  console.log("Created generic boss fallback image");
+  console.log("Created enhanced Pelosi fallback image");
   
   // Immediately assign this to pelosiImg so it's used right away
   pelosiImg = fallbackImg;
@@ -397,9 +466,9 @@ function draw() {
       if (phraseTimer > 120) { // Show phrase for ~2 seconds at 60 FPS
         phraseTimer = 0;
         if (isBossFight) {
-          // Start loading the boss image when transitioning to boss fight
+          // Start loading the Pelosi image when transitioning to boss fight
           if (!isLoadingPelosiImg && !pelosiImg) {
-            console.log('Starting to load boss image for boss fight');
+            console.log('Starting to load Pelosi image for boss fight');
             loadPelosiImage();
           }
           gameState = 'boss';
@@ -436,7 +505,7 @@ function draw() {
       
       // Check if level is complete
       if (ladies.length === 0) {
-        triggerPhrase = "Final Boss Battle";
+        triggerPhrase = "Final Boss: Nancy Pelosi";
         // Change to levelStart state for boss transition
         gameState = 'levelStart';
         phraseTimer = 0;
@@ -1223,6 +1292,13 @@ function displayScore() {
 
 /** Initialize the boss with unique characteristics */
 function initBoss() {
+  console.log('Initializing boss for boss fight');
+  
+  // Clear any existing boss image to prevent it from showing in other states
+  if (gameState !== 'boss' && !isBossFight) {
+    pelosiImg = null;
+  }
+  
   boss = { 
     x: width / 2, 
     y: 100, 
@@ -1230,8 +1306,8 @@ function initBoss() {
     height: 150, 
     health: 75,
     maxHealth: 75,
-    color: [50, 50, 150], // Blue color for the boss
-    name: "Final Boss",
+    color: [200, 150, 150], // Skin tone base color
+    name: "Nancy Pelosi",
     pattern: "congressional", // New pattern type
     moveSpeed: 2,
     moveDirection: 1,
@@ -1245,14 +1321,23 @@ function initBoss() {
     patternSet: 0 // Track current pattern set
   };
   
-  // If we don't have the boss image yet, use the fallback
-  if (!pelosiImg) {
-    pelosiImg = fallbackImg;
+  // Only create the Pelosi image if we're in the boss fight
+  if (gameState === 'boss' || isBossFight) {
+    console.log('Creating Pelosi image for boss fight');
+    // If we don't have the Pelosi image yet, use the fallback
+    if (!pelosiImg) {
+      pelosiImg = fallbackImg;
+    }
   }
 }
 
 /** Draw boss with animations and effects */
 function drawBoss() {
+  // Only draw the boss if we're in the boss game state
+  if (gameState !== 'boss' && !isBossDefeated) {
+    return; // Skip drawing the boss if not in boss state
+  }
+  
   push();
   translate(boss.x, boss.y);
   
@@ -1283,7 +1368,7 @@ function drawBoss() {
     image(fallbackImg, 0, 0, boss.width, boss.height);
     noTint(); // Reset tint
   }
-  
+ 
   pop();
   
   // Health bar
@@ -1942,6 +2027,11 @@ function displayPatternAnnouncement() {
 
 /** Display boss death sequence */
 function displayBossDeathSequence() {
+  // Only display the boss death sequence if we're in the boss game state
+  if (gameState !== 'boss') {
+    return; // Skip drawing the boss death sequence if not in boss state
+  }
+  
   // Draw the boss with death effects
   push();
   translate(boss.x, boss.y);
@@ -2353,12 +2443,18 @@ function loadPelosiImage() {
   if (isLoadingPelosiImg || pelosiImg) return;
   
   isLoadingPelosiImg = true;
-  console.log('Using built-in boss image for boss fight');
+  console.log('Using built-in Pelosi image for boss fight');
   
-  // Skip trying to load external files and use our fallback image directly
-  pelosiImg = fallbackImg;
+  // Only create and assign the fallback image when we're actually in the boss fight
+  if (gameState === 'boss' || gameState === 'levelStart' && isBossFight) {
+    pelosiImg = fallbackImg;
+    console.log('Built-in Pelosi image ready for use');
+  } else {
+    console.log('Not loading Pelosi image yet - not in boss fight');
+    // Don't assign pelosiImg until we're in the boss fight
+  }
+  
   isLoadingPelosiImg = false;
-  console.log('Built-in boss image ready for use');
 }
 
 /** Draw mobile touch controls */

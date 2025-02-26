@@ -533,6 +533,10 @@ function drawTitleScreen() {
   textSize(24);
   text("The Triggering", width / 2, height / 3 + 50);
   
+  // Version number
+  textSize(16);
+  text("Version 2.1", width / 2, height / 3 + 80);
+  
   // Instructions
   textSize(20);
   if (isMobile) {

@@ -141,7 +141,16 @@ function createResponsiveCanvas() {
     canvasHeight = min(600, window.innerHeight - 20);
   }
   
-  createCanvas(canvasWidth, canvasHeight);
+  // Create the canvas and center it
+  let canvas = createCanvas(canvasWidth, canvasHeight);
+  
+  // Center the canvas within the gameContainer
+  let gameContainer = document.getElementById('gameContainer');
+  if (gameContainer && canvas.elt) {
+    // Make sure the canvas is centered
+    canvas.elt.style.margin = '0 auto';
+  }
+  
   console.log(`Canvas created with size: ${canvasWidth}x${canvasHeight}`);
 }
 
@@ -354,6 +363,12 @@ function initGame() {
   currentLevel = 1;
   powerUps = [];
   playerLives = 3;
+  
+  // Show instructions by removing game-active class from gameContainer
+  let gameContainer = document.getElementById('gameContainer');
+  if (gameContainer) {
+    gameContainer.classList.remove('game-active');
+  }
 }
 
 /** Initialize the formation of ladies for Galaga-style gameplay */
@@ -606,6 +621,12 @@ function startGame() {
   showTriggerPhrase = true;
   phraseTimer = 0;
   canLadiesDropTears = false; // Don't allow tears until phrase is done
+  
+  // Hide instructions by adding game-active class to gameContainer
+  let gameContainer = document.getElementById('gameContainer');
+  if (gameContainer) {
+    gameContainer.classList.add('game-active');
+  }
 }
 
 /** Get trigger phrase for each level */

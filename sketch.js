@@ -526,28 +526,43 @@ function drawTitleScreen() {
   textSize(24);
   text("The Triggering", width / 2, height / 3 + 50);
   
-  // Instructions
+  // Instructions - different for mobile and desktop
   textSize(20);
-  text("WASD to move, SPACE to shoot", width / 2, height / 2 + 50);
+  if (isMobile) {
+    text("Touch arrows to move, tap right side to shoot", width / 2, height / 2 + 50);
+  } else {
+    text("WASD to move, SPACE to shoot", width / 2, height / 2 + 50);
+  }
   text("Neutralize the tears of the triggered!", width / 2, height / 2 + 80);
   
-  // Start prompt
+  // Start prompt - different for mobile and desktop
   textSize(24);
   if (frameCount % 60 < 30) { // Blinking effect
-    text("Press SPACE to start", width / 2, height / 2 + 150);
+    if (isMobile) {
+      text("Tap anywhere to start", width / 2, height / 2 + 150);
+    } else {
+      text("Press SPACE to start", width / 2, height / 2 + 150);
+    }
   }
   
-  // Check for space to start game
-  if (keyIsDown(32)) {
+  // Check for space to start game (desktop)
+  if (!isMobile && keyIsDown(32)) {
     console.log('Space pressed, starting game');
-    // Skip levelStart state and go directly to playing
-    gameState = 'playing';
-    gameStarted = true;
-    // Set flag to show trigger phrase during gameplay
-    showTriggerPhrase = true;
-    phraseTimer = 0;
-    canLadiesDropTears = false; // Don't allow tears until phrase is done
+    startGame();
   }
+  
+  // For mobile, the touch detection is handled in touchStarted()
+}
+
+// Helper function to start the game (used by both desktop and mobile)
+function startGame() {
+  // Skip levelStart state and go directly to playing
+  gameState = 'playing';
+  gameStarted = true;
+  // Set flag to show trigger phrase during gameplay
+  showTriggerPhrase = true;
+  phraseTimer = 0;
+  canLadiesDropTears = false; // Don't allow tears until phrase is done
 }
 
 /** Get trigger phrase for each level */
@@ -1733,13 +1748,19 @@ function drawGameOver() {
   textSize(24);
   if (frameCount % 60 < 30) { // Blinking effect
     fill(255);
-    text('Press SPACE to restart', width / 2, height / 2 + 150);
+    if (isMobile) {
+      text('Tap anywhere to restart', width / 2, height / 2 + 150);
+    } else {
+      text('Press SPACE to restart', width / 2, height / 2 + 150);
+    }
   }
   
-  // Check for space bar to restart the game
-  if (keyIsDown(32)) {
+  // Check for space bar to restart the game (desktop)
+  if (!isMobile && keyIsDown(32)) {
     initGame();
   }
+  
+  // For mobile, the touch detection is handled in touchStarted()
 }
 
 /** Draw victory screen */
@@ -1772,6 +1793,24 @@ function drawVictoryScreen() {
   fill(200, 200, 200);
   textSize(16);
   text('Thanks for playing LibTears: The Triggering', width / 2, height / 2 + 170);
+  
+  // Restart prompt
+  textSize(24);
+  if (frameCount % 60 < 30) { // Blinking effect
+    fill(255);
+    if (isMobile) {
+      text('Tap anywhere to restart', width / 2, height / 2 + 200);
+    } else {
+      text('Press SPACE to restart', width / 2, height / 2 + 200);
+    }
+  }
+  
+  // Check for space bar to restart the game (desktop)
+  if (!isMobile && keyIsDown(32)) {
+    initGame();
+  }
+  
+  // For mobile, the touch detection is handled in touchStarted()
 }
 
 /** Draw a simple American flag */
@@ -2303,10 +2342,26 @@ function drawMobileControls() {
 
 /** Handle touch events for mobile controls */
 function touchStarted() {
-  if (!isMobile || gameState !== 'playing') return;
+  if (!isMobile) return;
   
-  // Check which control was touched
-  checkTouchControls();
+  // Handle title screen touch to start game
+  if (gameState === 'titleScreen') {
+    console.log('Touch detected on title screen, starting game');
+    startGame();
+    return false;
+  }
+  
+  // Handle game over screen touch to restart
+  if (gameState === 'gameOver' || gameState === 'victory') {
+    console.log('Touch detected on end screen, restarting game');
+    initGame();
+    return false;
+  }
+  
+  // Check which control was touched during gameplay
+  if (gameState === 'playing') {
+    checkTouchControls();
+  }
   
   // Prevent default behavior (like scrolling)
   return false;

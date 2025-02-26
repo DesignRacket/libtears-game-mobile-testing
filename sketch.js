@@ -2497,11 +2497,7 @@ function drawMobileDebugInfo() {
   // Display fire button status
   text(`Fire: ${touchControls.fireButton.pressed ? 'PRESSED' : 'Released'}`, 10, 210);
   
-  // Display directional controls (for compatibility)
-  text(`Left: ${touchControls.leftSide ? 'ON' : 'off'}`, width - 100, 150);
-  text(`Right: ${touchControls.rightSide ? 'ON' : 'off'}`, width - 100, 165);
-  text(`Up: ${touchControls.upSide ? 'ON' : 'off'}`, width - 100, 180);
-  text(`Down: ${touchControls.downSide ? 'ON' : 'off'}`, width - 100, 195);
+  // Removed directional controls display as they're only for compatibility
 }
 
 /** Handle touch events for mobile controls */

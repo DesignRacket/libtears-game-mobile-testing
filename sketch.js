@@ -73,19 +73,33 @@ let fireButton = {
 
 /** Preload function to load assets */
 function preload() {
-  console.log('Preload function running');
+  // Check if on mobile before logging
+  let isMobileCheck = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  
+  if (!isMobileCheck) {
+    console.log('Preload function running');
+  }
+  
   // No longer loading Pelosi image here
   loadingComplete = true;
 }
 
 /** Setup function to initialize the game */
 function setup() {
-  console.log('Setup function running');
+  // Only log on non-mobile devices
+  if (!(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent))) {
+    console.log('Setup function running');
+  }
+  
   createCanvas(800, 600);
   
   // Detect if on mobile device
   isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  console.log('Is mobile device:', isMobile);
+  
+  // Only log on non-mobile devices
+  if (!isMobile) {
+    console.log('Is mobile device:', isMobile);
+  }
   
   // Set up joystick and fire button positions
   if (isMobile) {
@@ -99,12 +113,16 @@ function setup() {
   }
   
   // Create fallback image immediately
-  console.log('Creating fallback image');
+  if (!isMobile) {
+    console.log('Creating fallback image');
+  }
   createFallbackImage();
   
   // Ensure pelosiImg is set to the fallback image
   if (!pelosiImg) {
-    console.log('Ensuring pelosiImg is set');
+    if (!isMobile) {
+      console.log('Ensuring pelosiImg is set');
+    }
     pelosiImg = fallbackImg;
   }
   
@@ -120,7 +138,9 @@ function setup() {
   
   // Force transition to title screen
   gameState = 'titleScreen';
-  console.log('Game state set to:', gameState);
+  if (!isMobile) {
+    console.log('Game state set to:', gameState);
+  }
   
   // Force loading complete
   loadingComplete = true;
@@ -516,8 +536,8 @@ function drawParallaxStars() {
 
 /** Draw title screen */
 function drawTitleScreen() {
-  // Debug
-  if (frameCount % 60 === 0) {
+  // Remove debug logging on mobile
+  if (!isMobile && frameCount % 60 === 0) {
     console.log('Drawing title screen');
   }
 
@@ -533,11 +553,13 @@ function drawTitleScreen() {
   textSize(24);
   text("The Triggering", width / 2, height / 3 + 50);
   
-  // Version number
-  textSize(16);
+  // Version number - make more visible
+  fill(255, 255, 0); // Yellow color for better visibility
+  textSize(isMobile ? 20 : 16); // Larger text on mobile
   text("Version 2.1", width / 2, height / 3 + 80);
   
   // Instructions
+  fill(255);
   textSize(20);
   if (isMobile) {
     text("Use joystick to move, tap right button to shoot", width / 2, height / 2 + 50);
@@ -2269,12 +2291,18 @@ function loadPelosiImage() {
   if (isLoadingPelosiImg || pelosiImg) return;
   
   isLoadingPelosiImg = true;
-  console.log('Using built-in Pelosi image for boss fight');
+  
+  if (!isMobile) {
+    console.log('Using built-in Pelosi image for boss fight');
+  }
   
   // Skip trying to load external files and use our fallback image directly
   pelosiImg = fallbackImg;
   isLoadingPelosiImg = false;
-  console.log('Built-in Pelosi image ready for use');
+  
+  if (!isMobile) {
+    console.log('Built-in Pelosi image ready for use');
+  }
   
   // No need for the timeout since we're using the fallback image immediately
 }

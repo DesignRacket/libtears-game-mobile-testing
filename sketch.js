@@ -50,6 +50,26 @@ let bossOpacity = 255; // For death animation fading
 let isBossDefeated = false; // Flag to track if boss is defeated
 let showTriggerPhrase = false; // Flag to show trigger phrase during gameplay
 let canLadiesDropTears = false; // Flag to control when ladies can drop tears
+let isMobile = false;  // Flag to detect if on mobile device
+let joystick = {
+  x: 0,
+  y: 0,
+  radius: 50,
+  innerRadius: 25,
+  active: false,
+  touchId: null,
+  baseX: 0,
+  baseY: 0,
+  deltaX: 0,
+  deltaY: 0
+};
+let fireButton = {
+  x: 0,
+  y: 0,
+  radius: 40,
+  active: false,
+  touchId: null
+};
 
 /** Preload function to load assets */
 function preload() {
@@ -62,6 +82,21 @@ function preload() {
 function setup() {
   console.log('Setup function running');
   createCanvas(800, 600);
+  
+  // Detect if on mobile device
+  isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  console.log('Is mobile device:', isMobile);
+  
+  // Set up joystick and fire button positions
+  if (isMobile) {
+    joystick.baseX = 100;
+    joystick.baseY = height - 100;
+    joystick.x = joystick.baseX;
+    joystick.y = joystick.baseY;
+    
+    fireButton.x = width - 100;
+    fireButton.y = height - 100;
+  }
   
   // Create fallback image immediately
   console.log('Creating fallback image');
@@ -382,6 +417,11 @@ function draw() {
         phraseTimer = 0;
         isBossFight = true; // Set the boss fight flag
       }
+      
+      // Draw mobile controls if on mobile
+      if (isMobile) {
+        drawMobileControls();
+      }
       break;
     case 'boss':
       drawBoss();
@@ -431,6 +471,11 @@ function draw() {
         
         // Clear all tears from screen for dramatic effect
         tears = [];
+      }
+      
+      // Draw mobile controls if on mobile
+      if (isMobile) {
+        drawMobileControls();
       }
       break;
     case 'gameOver':
@@ -490,18 +535,26 @@ function drawTitleScreen() {
   
   // Instructions
   textSize(20);
-  text("WASD to move, SPACE to shoot", width / 2, height / 2 + 50);
+  if (isMobile) {
+    text("Use joystick to move, tap right button to shoot", width / 2, height / 2 + 50);
+  } else {
+    text("WASD to move, SPACE to shoot", width / 2, height / 2 + 50);
+  }
   text("Neutralize the tears of the triggered!", width / 2, height / 2 + 80);
   
   // Start prompt
   textSize(24);
   if (frameCount % 60 < 30) { // Blinking effect
-    text("Press SPACE to start", width / 2, height / 2 + 150);
+    if (isMobile) {
+      text("Tap to start", width / 2, height / 2 + 150);
+    } else {
+      text("Press SPACE to start", width / 2, height / 2 + 150);
+    }
   }
   
   // Check for space to start game
-  if (keyIsDown(32)) {
-    console.log('Space pressed, starting game');
+  if (keyIsDown(32) || (isMobile && touches.length > 0 && gameState === 'titleScreen')) {
+    console.log('Game starting');
     // Skip levelStart state and go directly to playing
     gameState = 'playing';
     gameStarted = true;
@@ -641,33 +694,47 @@ function drawThrustParticles() {
   }
 }
 
-/** Move player based on WASD keys with direct translation */
+/** Move player based on WASD keys or joystick with direct translation */
 function handlePlayerMovement() {
   // Variable to track if any movement key is pressed
   let isMoving = false;
   
-  // W key - move up
-  if (keyIsDown(87)) { // W key
-    player.y -= player.speed;
-    isMoving = true;
-  }
-  
-  // S key - move down
-  if (keyIsDown(83)) { // S key
-    player.y += player.speed;
-    isMoving = true;
-  }
-  
-  // A key - move left
-  if (keyIsDown(65)) { // A key
-    player.x -= player.speed;
-    isMoving = true;
-  }
-  
-  // D key - move right
-  if (keyIsDown(68)) { // D key
-    player.x += player.speed;
-    isMoving = true;
+  if (isMobile && joystick.active) {
+    // Mobile joystick movement
+    if (Math.abs(joystick.deltaX) > 10 || Math.abs(joystick.deltaY) > 10) {
+      // Calculate movement based on joystick position
+      let moveX = joystick.deltaX * (player.speed / joystick.radius);
+      let moveY = joystick.deltaY * (player.speed / joystick.radius);
+      
+      player.x += moveX;
+      player.y += moveY;
+      isMoving = true;
+    }
+  } else {
+    // Keyboard controls
+    // W key - move up
+    if (keyIsDown(87)) { // W key
+      player.y -= player.speed;
+      isMoving = true;
+    }
+    
+    // S key - move down
+    if (keyIsDown(83)) { // S key
+      player.y += player.speed;
+      isMoving = true;
+    }
+    
+    // A key - move left
+    if (keyIsDown(65)) { // A key
+      player.x -= player.speed;
+      isMoving = true;
+    }
+    
+    // D key - move right
+    if (keyIsDown(68)) { // D key
+      player.x += player.speed;
+      isMoving = true;
+    }
   }
   
   // Constrain player to screen boundaries
@@ -683,7 +750,7 @@ function handleShooting() {
   // Don't allow shooting if boss is defeated
   if (isBossDefeated) return;
   
-  if (keyIsDown(32)) { // 32 is the keyCode for spacebar
+  if (keyIsDown(32) || (isMobile && fireButton.active)) {
     if (frameCount % player.fireRate === 0) { // Use player's fire rate
       
       // Basic flag
@@ -2206,4 +2273,140 @@ function loadPelosiImage() {
   console.log('Built-in Pelosi image ready for use');
   
   // No need for the timeout since we're using the fallback image immediately
+}
+
+/** Draw mobile controls if on mobile device */
+function drawMobileControls() {
+  if (!isMobile) return;
+  
+  // Draw joystick base
+  fill(100, 100, 100, 100);
+  ellipse(joystick.baseX, joystick.baseY, joystick.radius * 2);
+  
+  // Draw joystick handle
+  fill(200, 200, 200, 150);
+  ellipse(joystick.x, joystick.y, joystick.innerRadius * 2);
+  
+  // Draw fire button
+  if (fireButton.active) {
+    fill(255, 50, 50, 150);
+  } else {
+    fill(255, 50, 50, 100);
+  }
+  ellipse(fireButton.x, fireButton.y, fireButton.radius * 2);
+  
+  // Draw fire icon
+  fill(255);
+  textSize(20);
+  textAlign(CENTER, CENTER);
+  text("FIRE", fireButton.x, fireButton.y);
+}
+
+/** Handle touch events for mobile controls */
+function touchStarted() {
+  // Handle title screen touch to start game
+  if (gameState === 'titleScreen') {
+    return false; // Let the regular touch handling work for starting the game
+  }
+  
+  // Only process touches if on mobile and in playing or boss state
+  if (!isMobile || (gameState !== 'playing' && gameState !== 'boss')) {
+    return false;
+  }
+  
+  // Check each touch
+  for (let i = 0; i < touches.length; i++) {
+    let touch = touches[i];
+    
+    // Check if touch is in joystick area (left side of screen)
+    if (touch.x < width/2 && !joystick.active) {
+      joystick.active = true;
+      joystick.touchId = touch.id;
+      joystick.baseX = touch.x;
+      joystick.baseY = touch.y;
+      joystick.x = touch.x;
+      joystick.y = touch.y;
+    }
+    
+    // Check if touch is in fire button area (right side of screen)
+    if (touch.x > width/2 && !fireButton.active) {
+      fireButton.active = true;
+      fireButton.touchId = touch.id;
+    }
+  }
+  
+  return false; // Prevent default
+}
+
+function touchMoved() {
+  if (!isMobile || (gameState !== 'playing' && gameState !== 'boss')) {
+    return false;
+  }
+  
+  // Update joystick position if active
+  for (let i = 0; i < touches.length; i++) {
+    let touch = touches[i];
+    
+    if (joystick.active && touch.id === joystick.touchId) {
+      // Calculate distance from base
+      let dx = touch.x - joystick.baseX;
+      let dy = touch.y - joystick.baseY;
+      let distance = sqrt(dx*dx + dy*dy);
+      
+      // Constrain joystick to radius
+      if (distance > joystick.radius) {
+        let angle = atan2(dy, dx);
+        joystick.x = joystick.baseX + cos(angle) * joystick.radius;
+        joystick.y = joystick.baseY + sin(angle) * joystick.radius;
+      } else {
+        joystick.x = touch.x;
+        joystick.y = touch.y;
+      }
+      
+      // Update delta values for movement
+      joystick.deltaX = joystick.x - joystick.baseX;
+      joystick.deltaY = joystick.y - joystick.baseY;
+    }
+  }
+  
+  return false; // Prevent default
+}
+
+function touchEnded() {
+  if (!isMobile) {
+    return false;
+  }
+  
+  // Check if the released touch was the joystick or fire button
+  let touchFound = false;
+  for (let i = 0; i < touches.length; i++) {
+    if (touches[i].id === joystick.touchId) {
+      touchFound = true;
+      break;
+    }
+  }
+  
+  if (!touchFound && joystick.active) {
+    // Reset joystick
+    joystick.active = false;
+    joystick.x = joystick.baseX;
+    joystick.y = joystick.baseY;
+    joystick.deltaX = 0;
+    joystick.deltaY = 0;
+  }
+  
+  // Check if fire button touch was released
+  touchFound = false;
+  for (let i = 0; i < touches.length; i++) {
+    if (touches[i].id === fireButton.touchId) {
+      touchFound = true;
+      break;
+    }
+  }
+  
+  if (!touchFound && fireButton.active) {
+    fireButton.active = false;
+  }
+  
+  return false; // Prevent default
 }
